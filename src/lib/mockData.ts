@@ -45,21 +45,26 @@ export const generateMockQuestions = (
   elos: string[]
 ) => {
   const difficulties = ['Easy', 'Medium', 'Hard'];
+  const taxonomies = ['remember', 'understand', 'apply', 'analyse'];
   const questions = [];
   for (let i = 0; i < count; i++) {
     const elo = elos[i % elos.length] || 'General';
     const correctIndex = i % 4;
+    const options = [
+      `Option A for question ${i + 1}`,
+      `Option B for question ${i + 1}`,
+      `Option C for question ${i + 1}`,
+      `Option D for question ${i + 1}`,
+    ];
     questions.push({
-      questionId: i + 1,
-      question: `Sample ${subject} question ${i + 1} on "${chapter}" — assesses: ${elo}`,
-      options: [
-        { id: 'A', text: `Option A for question ${i + 1}`, isCorrect: correctIndex === 0 },
-        { id: 'B', text: `Option B for question ${i + 1}`, isCorrect: correctIndex === 1 },
-        { id: 'C', text: `Option C for question ${i + 1}`, isCorrect: correctIndex === 2 },
-        { id: 'D', text: `Option D for question ${i + 1}`, isCorrect: correctIndex === 3 },
-      ],
+      id: `q-${i + 1}`,
+      text: `Sample ${subject} question ${i + 1} on "${chapter}" — assesses: ${elo}`,
+      type: 'mcq',
+      options,
+      correctAnswer: options[correctIndex],
       difficulty: difficulties[i % difficulties.length],
       elo,
+      taxonomy: taxonomies[i % taxonomies.length],
       explanation: 'This is a mock explanation generated for development purposes.',
     });
   }
