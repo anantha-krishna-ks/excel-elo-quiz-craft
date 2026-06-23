@@ -8,7 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Sparkles } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  mockGrades,
+  mockSubjectsByGrade,
+  mockChaptersBySubject,
+  mockELOsByChapter,
+  generateMockQuestions,
+} from "@/lib/mockData";
 
 interface Grade {
   classid: number;
@@ -100,11 +106,8 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchGrades = async () => {
     setIsLoadingGrades(true);
     try {
-      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
-        body: { endpoint: 'get_classes', method: 'GET' },
-      });
-      if (error) throw error;
-      setGrades(data);
+      await new Promise((r) => setTimeout(r, 300));
+      setGrades(mockGrades);
     } catch (error) {
       toast({
         title: "Error",
@@ -119,11 +122,8 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchSubjects = async (gradeId: string) => {
     setIsLoadingSubjects(true);
     try {
-      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
-        body: { endpoint: 'get_subject', method: 'GET', query: { classid: gradeId } },
-      });
-      if (error) throw error;
-      setSubjects(data);
+      await new Promise((r) => setTimeout(r, 300));
+      setSubjects(mockSubjectsByGrade[gradeId] || mockSubjectsByGrade.default);
     } catch (error) {
       toast({
         title: "Error",
@@ -138,15 +138,8 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchChapters = async (gradeId: string, subjectId: string) => {
     setIsLoadingChapters(true);
     try {
-      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
-        body: {
-          endpoint: 'get_chapters',
-          method: 'GET',
-          query: { classid: gradeId, subjectid: subjectId },
-        },
-      });
-      if (error) throw error;
-      setChapters(data);
+      await new Promise((r) => setTimeout(r, 300));
+      setChapters(mockChaptersBySubject[`${gradeId}-${subjectId}`] || mockChaptersBySubject.default);
     } catch (error) {
       toast({
         title: "Error",
@@ -161,11 +154,8 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchELOs = async (chapterId: string) => {
     setIsLoadingELOs(true);
     try {
-      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
-        body: { endpoint: 'get-elo-details', method: 'GET', query: { chapterid: chapterId } },
-      });
-      if (error) throw error;
-      setELOs(data.elo_details || []);
+      await new Promise((r) => setTimeout(r, 300));
+      setELOs(mockELOsByChapter[chapterId] || mockELOsByChapter.default);
     } catch (error) {
       toast({
         title: "Error",
@@ -213,16 +203,19 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
         selectedELOs
       };
 
-      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
-        body: { endpoint: 'generate-questions', method: 'POST', payload: requestBody },
-      });
-      if (error) throw error;
-      
-      if (data.questions && data.questions.length > 0) {
-        onQuizGenerated(data.questions);
+      await new Promise((r) => setTimeout(r, 800));
+      const questions = generateMockQuestions(
+        questionCount,
+        requestBody.subject,
+        requestBody.chapter,
+        selectedELOs
+      );
+
+      if (questions.length > 0) {
+        onQuizGenerated(questions);
         toast({
           title: "Quiz Generated",
-          description: `Successfully generated ${data.questions.length} questions for "${quizName}".`,
+          description: `Successfully generated ${questions.length} questions for "${quizName}".`,
         });
       } else {
         throw new Error("No questions generated");
