@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Sparkles } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Grade {
   classid: number;
@@ -99,8 +100,10 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchGrades = async () => {
     setIsLoadingGrades(true);
     try {
-      const response = await fetch('https://ai.excelsoftcorp.com/aiapps/EXAMPREP/get_classes');
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
+        body: { endpoint: 'get_classes', method: 'GET' },
+      });
+      if (error) throw error;
       setGrades(data);
     } catch (error) {
       toast({
@@ -116,8 +119,10 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchSubjects = async (gradeId: string) => {
     setIsLoadingSubjects(true);
     try {
-      const response = await fetch(`https://ai.excelsoftcorp.com/aiapps/EXAMPREP/get_subject?classid=${gradeId}`);
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
+        body: { endpoint: 'get_subject', method: 'GET', query: { classid: gradeId } },
+      });
+      if (error) throw error;
       setSubjects(data);
     } catch (error) {
       toast({
@@ -133,8 +138,14 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchChapters = async (gradeId: string, subjectId: string) => {
     setIsLoadingChapters(true);
     try {
-      const response = await fetch(`https://ai.excelsoftcorp.com/aiapps/EXAMPREP/get_chapters?classid=${gradeId}&subjectid=${subjectId}`);
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
+        body: {
+          endpoint: 'get_chapters',
+          method: 'GET',
+          query: { classid: gradeId, subjectid: subjectId },
+        },
+      });
+      if (error) throw error;
       setChapters(data);
     } catch (error) {
       toast({
@@ -150,8 +161,10 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
   const fetchELOs = async (chapterId: string) => {
     setIsLoadingELOs(true);
     try {
-      const response = await fetch(`https://ai.excelsoftcorp.com/aiapps/EXAMPREP/get-elo-details?chapterid=${chapterId}`);
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
+        body: { endpoint: 'get-elo-details', method: 'GET', query: { chapterid: chapterId } },
+      });
+      if (error) throw error;
       setELOs(data.elo_details || []);
     } catch (error) {
       toast({
@@ -200,15 +213,10 @@ export const CreateQuizForm = ({ onQuizGenerated }: CreateQuizFormProps) => {
         selectedELOs
       };
 
-      const response = await fetch('https://ai.excelsoftcorp.com/ExcelAIQuizGen/generate-questions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
+        body: { endpoint: 'generate-questions', method: 'POST', payload: requestBody },
       });
-
-      const data = await response.json();
+      if (error) throw error;
       
       if (data.questions && data.questions.length > 0) {
         onQuizGenerated(data.questions);
