@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   usercode: string;
@@ -25,32 +24,20 @@ export const useAuth = create<AuthState>()(
 
       login: async (username: string, password: string) => {
         try {
-          const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
-            body: {
-              endpoint: 'check-user',
-              method: 'POST',
-              payload: { username, password },
-            },
-          });
+          // MOCK MODE: Excelsoft API is unreachable from browser (CORS) and from
+          // edge functions (DNS). Accept any non-empty credentials for now.
+          await new Promise((r) => setTimeout(r, 400));
+          if (!username || !password) return false;
 
-          if (error) {
-            console.error('Login proxy error:', error);
-            return false;
-          }
-
-          if (data.status === 'S001') {
-            const user = {
-              usercode: data.usercode,
-              custcode: data.custcode,
-              orgcode: data.orgcode,
-              username: data.username,
-              userrole: data.userrole,
-            };
-
-            set({ user, isAuthenticated: true });
-            return true;
-          }
-          return false;
+          const user = {
+            usercode: 'MOCK001',
+            custcode: 'CUST001',
+            orgcode: 'ORG001',
+            username,
+            userrole: 'Teacher',
+          };
+          set({ user, isAuthenticated: true });
+          return true;
         } catch (error) {
           console.error('Login error:', error);
           return false;
