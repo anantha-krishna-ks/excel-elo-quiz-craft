@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   usercode: string;
@@ -24,15 +25,18 @@ export const useAuth = create<AuthState>()(
 
       login: async (username: string, password: string) => {
         try {
-          const response = await fetch('https://ai.excelsoftcorp.com/aiapps/AIToolKit/UnitPlanGen/check-user', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          const { data, error } = await supabase.functions.invoke('excelsoft-proxy', {
+            body: {
+              endpoint: 'check-user',
+              method: 'POST',
+              payload: { username, password },
             },
-            body: JSON.stringify({ username, password }),
           });
 
-          const data = await response.json();
+          if (error) {
+            console.error('Login proxy error:', error);
+            return false;
+          }
 
           if (data.status === 'S001') {
             const user = {
